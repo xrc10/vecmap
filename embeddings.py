@@ -19,7 +19,7 @@ import numpy as np
 
 
 def read(file, threshold=0, vocabulary=None, dtype='float'):
-    header = file.readline().split(' ')
+    header = file.readline().strip().split(' ')
     count = int(header[0]) if threshold <= 0 else min(threshold, int(header[0]))
     dim = int(header[1])
     words = []
@@ -32,6 +32,7 @@ def read(file, threshold=0, vocabulary=None, dtype='float'):
         elif word in vocabulary:
             words.append(word)
             matrix.append(np.fromstring(vec, sep=' ', dtype=dtype))
+
     return (words, matrix) if vocabulary is None else (words, np.array(matrix, dtype=dtype))
 
 

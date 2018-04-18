@@ -26,11 +26,12 @@ def main():
     parser.add_argument('-i', '--input', default=sys.stdin.fileno(), help='the input word embedding file (defaults to stdin)')
     parser.add_argument('-o', '--output', default=sys.stdout.fileno(), help='the output word embedding file (defaults to stdout)')
     parser.add_argument('--encoding', default='utf-8', help='the character encoding for input/output (defaults to utf-8)')
+    parser.add_argument('--max_vocab', default=200000, help='only read top max_vocab words from the embedding file', type=int)
     args = parser.parse_args()
 
     # Read input embeddings
     f = open(args.input, encoding=args.encoding, errors='surrogateescape')
-    words, matrix = embeddings.read(f)
+    words, matrix = embeddings.read(f, threshold=args.max_vocab)
 
     # Perform normalization actions
     for action in args.actions:

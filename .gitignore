@@ -1,5 +1,6 @@
 data/
 output/
+save/
 
 *~
 .DS_Store
