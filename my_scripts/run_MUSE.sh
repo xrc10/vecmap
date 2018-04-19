@@ -60,11 +60,9 @@ do
         MAPPED_SRC_EMB_PATH=$SAVE_PATH/full/wiki.$SRC_LANG.full.mapped.vec
         # python $EVAL_ROOT/evaluate_MUSE.py --src_lang $SRC_LANG --tgt_lang $TGT_LANG --tgt_emb $MAPPED_TGT_EMB_PATH --src_emb $MAPPED_SRC_EMB_PATH --max_vocab $TRAIN_MAX_SIZE --exp_path $SAVE_PATH/full --cuda 0;
         # python $EVAL_ROOT/find_nearest_neighbor.py --src_path $MAPPED_SRC_EMB_PATH --tgt_path $MAPPED_TGT_EMB_PATH --bi_dict_path $TRN_DICT_PATH &> $SAVE_PATH/full/find_nnr.log
-        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $TRN_DICT_PATH &> $SAVE_PATH/full/eval_knn_acc.$SRC_LANG-$TGT_LANG.log
-        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $TRN_DICT_PATH -src2tgt 0 &> $SAVE_PATH/full/eval_knn_acc.$TGT_LANG-$SRC_LANG.log
+        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH &> $SAVE_PATH/full/eval_knn_acc.$SRC_LANG-$TGT_LANG.log
+        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH -src2tgt 0 &> $SAVE_PATH/full/eval_knn_acc.$TGT_LANG-$SRC_LANG.log
 
-
-        
     elif [ "$PHASE" = 4 ]; then #
         echo "evaluating ... "
         
