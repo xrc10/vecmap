@@ -7,7 +7,7 @@ NAME=save/UBiLexAT/
 
 TRAIN_MAX_SIZE=200000
 
-PHASE=1 # 0-preprocessing # 1-sup train mapping # 2-(nearly) unsup train mapping # 3-evaluate sup train # 4-evaluate unsup train
+PHASE=2 # 0-preprocessing # 1-sup train mapping # 2-(nearly) unsup train mapping # 3-evaluate sup train # 4-evaluate unsup train
 
 TGT_LANG=en
 SRC_LANGS=(tr es zh it)
@@ -58,12 +58,40 @@ do
 
     elif [ "$PHASE" = 3 ]; then #
         echo "evaluating ... "
-        
-        MAPPED_TGT_EMB_PATH=$SAVE_PATH/full/wiki.$TGT_LANG.full.mapped.vec
-        MAPPED_SRC_EMB_PATH=$SAVE_PATH/full/wiki.$SRC_LANG.full.mapped.vec
-        # python $EVAL_ROOT/evaluate_MUSE.py --src_lang $SRC_LANG --tgt_lang $TGT_LANG --tgt_emb $MAPPED_TGT_EMB_PATH --src_emb $MAPPED_SRC_EMB_PATH --max_vocab $TRAIN_MAX_SIZE --exp_path $SAVE_PATH/full --cuda 0;
-        # python $EVAL_ROOT/find_nearest_neighbor.py --src_path $MAPPED_SRC_EMB_PATH --tgt_path $MAPPED_TGT_EMB_PATH --bi_dict_path $TRN_DICT_PATH &> $SAVE_PATH/full/find_nnr.log
-        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH &> $SAVE_PATH/full/eval_knn_acc.$SRC_LANG-$TGT_LANG.log
-        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH -src2tgt 0 &> $SAVE_PATH/full/eval_knn_acc.$TGT_LANG-$SRC_LANG.log
+        # for method_command in "${METHODS[@]}"
+        # do
+        #     METHOD="${method_command%%:*}";
+        #     COMMAND="${method_command##*:}";
+        #     MAPPED_TGT_EMB_PATH=$SAVE_PATH/$METHOD/wiki.$TGT_LANG.mapped.vec
+        #     MAPPED_SRC_EMB_PATH=$SAVE_PATH/$METHOD/wiki.$SRC_LANG.mapped.vec
+        #     python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH > $SAVE_PATH/$METHOD/eval_knn_acc.$SRC_LANG-$TGT_LANG.log 2> $SAVE_PATH/$METHOD/"$SRC_LANG"-"$TGT_LANG".acc
+        #     python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH -src2tgt 0 > $SAVE_PATH/$METHOD/eval_knn_acc.$TGT_LANG-$SRC_LANG.log 2> $SAVE_PATH/$METHOD/"$TGT_LANG"-"$SRC_LANG".acc
+        # done
     fi
 done
+
+if [ $PHASE = 3 ]; then
+    echo "----------------------" > my_scripts/UBiLexAT.log
+    echo -ne "Method\t" >> my_scripts/UBiLexAT.log
+    for i in 0 1 2 3
+    do
+        SRC_LANG=${SRC_LANGS[$i]};
+        echo -ne "$SRC_LANG"-en"\t"en-"$SRC_LANG""\t" >> my_scripts/UBiLexAT.log
+    done
+    echo "" >> my_scripts/UBiLexAT.log
+    echo "----------------------" >> my_scripts/UBiLexAT.log
+    for method_command in "${METHODS[@]}"
+    do
+        METHOD="${method_command%%:*}";
+        echo -ne "$METHOD""\t" >> my_scripts/UBiLexAT.log
+        for i in 0 1 2 3
+        do
+            SRC_LANG=${SRC_LANGS[$i]};
+            SAVE_PATH=$NAME/$SRC_LANG-$TGT_LANG/;
+            acc1=$(cat "$SAVE_PATH/$METHOD"/"$SRC_LANG"-"$TGT_LANG".acc) 
+            acc2=$(cat "$SAVE_PATH/$METHOD"/"$TGT_LANG"-"$SRC_LANG".acc) 
+            echo -ne "$acc1""\t""$acc2""\t" >> my_scripts/UBiLexAT.log
+        done
+        echo "" >> my_scripts/UBiLexAT.log
+    done
+fi
