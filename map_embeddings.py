@@ -93,6 +93,10 @@ def main():
     else:
         xp = np
 
+    # Create log file
+    if args.log:
+        log = open(args.log, mode='w', encoding=args.encoding, errors='surrogateescape')
+
     # Build word to index map
     src_word2ind = {word: i for i, word in enumerate(src_words)}
     trg_word2ind = {word: i for i, word in enumerate(trg_words)}
@@ -125,6 +129,8 @@ def main():
                 pass
         print("Train:Read {} word pairs".format(len(src_indices)))
 
+    log.write("Train:Read {} word pairs\n".format(len(src_indices)))
+
     # Read validation dictionary
     if args.validation is not None:
         f = open(args.validation, encoding=args.encoding, errors='surrogateescape')
@@ -144,9 +150,6 @@ def main():
         oov -= vocab  # If one of the translation options is in the vocabulary, then the entry is not an oov
         validation_coverage = len(validation) / (len(validation) + len(oov))
         print("Validation:Read {} word pairs".format(len(validation)))
-    # Create log file
-    if args.log:
-        log = open(args.log, mode='w', encoding=args.encoding, errors='surrogateescape')
 
     # STEP 0: Normalization
     for action in args.normalize:

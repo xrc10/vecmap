@@ -7,17 +7,18 @@ NAME=save/UBiLexAT/
 
 TRAIN_MAX_SIZE=200000
 
-PHASE=2 # 0-preprocessing # 1-sup train mapping # 2-(nearly) unsup train mapping # 3-evaluate sup train # 4-evaluate unsup train
+PHASE=3 # 0-preprocessing # 1-sup train mapping # 2-(nearly) unsup train mapping # 3-evaluate
 
 TGT_LANG=en
 SRC_LANGS=(tr es zh it)
 
 # Methods and command
-METHODS=(   "Artetxe16:--normalize unit center"
+METHODS=(   "Mikolov:--whiten --src_reweight --src_dewhiten trg --trg_dewhiten trg"
             "Zhang:"
             "Xing:--normalize unit"
             "Shigeto:--whiten --trg_reweight --src_dewhiten src --trg_dewhiten src" 
-            "Mikolov:--whiten --src_reweight --src_dewhiten trg --trg_dewhiten trg")
+            "Artetxe16:--normalize unit center"
+            "Artetxe17:--normalize unit center --orthogonal --numerals --self_learning -v")
 
 for i in 0 1 2 3
 do
@@ -33,6 +34,7 @@ do
     # Dictionary paths
     VAL_DICT_PATH="$DATA_ROOT"/"$SRC_LANG"-"$TGT_LANG"/"$SRC_LANG"-"$TGT_LANG".dict.tst.txt
     TRN_DICT_PATH="$DATA_ROOT"/"$SRC_LANG"-"$TGT_LANG"/"$SRC_LANG"-"$TGT_LANG".dict.trn.txt
+    TRN_SEED_DICT_PATH="$DATA_ROOT"/"$SRC_LANG"-"$TGT_LANG"/"$SRC_LANG"-"$TGT_LANG".dict.trn.seed.txt
 
     if [ "$PHASE" = 1 ]; then # train the mapping with full dictionary
         echo "training the mapping with full labels ... "
@@ -54,7 +56,7 @@ do
         mkdir -p $SAVE_PATH/Artetxe17;
         MAPPED_TGT_EMB_PATH=$SAVE_PATH/Artetxe17/wiki.$TGT_LANG.mapped.vec
         MAPPED_SRC_EMB_PATH=$SAVE_PATH/Artetxe17/wiki.$SRC_LANG.mapped.vec
-        python3 map_embeddings.py --orthogonal --normalize unit center $SRC_EMB_PATH $TGT_EMB_PATH $MAPPED_SRC_EMB_PATH $MAPPED_TGT_EMB_PATH --numerals --self_learning -v --validation $VAL_DICT_PATH --log $SAVE_PATH/Artetxe17/logger.txt
+        python3 map_embeddings.py $SRC_EMB_PATH $TGT_EMB_PATH $MAPPED_SRC_EMB_PATH $MAPPED_TGT_EMB_PATH -d $TRN_SEED_DICT_PATH --orthogonal  --self_learning -v --validation $VAL_DICT_PATH --log $SAVE_PATH/Artetxe17/logger.txt --normalize unit center 
 
     elif [ "$PHASE" = 3 ]; then #
         echo "evaluating ... "
@@ -67,6 +69,11 @@ do
         #     python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH > $SAVE_PATH/$METHOD/eval_knn_acc.$SRC_LANG-$TGT_LANG.log 2> $SAVE_PATH/$METHOD/"$SRC_LANG"-"$TGT_LANG".acc
         #     python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH -src2tgt 0 > $SAVE_PATH/$METHOD/eval_knn_acc.$TGT_LANG-$SRC_LANG.log 2> $SAVE_PATH/$METHOD/"$TGT_LANG"-"$SRC_LANG".acc
         # done
+        METHOD=Artetxe17
+        MAPPED_TGT_EMB_PATH=$SAVE_PATH/$METHOD/wiki.$TGT_LANG.mapped.vec
+        MAPPED_SRC_EMB_PATH=$SAVE_PATH/$METHOD/wiki.$SRC_LANG.mapped.vec
+        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH > $SAVE_PATH/$METHOD/eval_knn_acc.$SRC_LANG-$TGT_LANG.log 2> $SAVE_PATH/$METHOD/"$SRC_LANG"-"$TGT_LANG".acc
+        python $EVAL_ROOT/eval_knn_acc.py -src_emb_path $MAPPED_SRC_EMB_PATH -tgt_emb_path $MAPPED_TGT_EMB_PATH -dictionary $VAL_DICT_PATH -src2tgt 0 > $SAVE_PATH/$METHOD/eval_knn_acc.$TGT_LANG-$SRC_LANG.log 2> $SAVE_PATH/$METHOD/"$TGT_LANG"-"$SRC_LANG".acc
     fi
 done
 
