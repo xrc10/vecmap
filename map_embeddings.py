@@ -40,6 +40,8 @@ def main():
     parser.add_argument('--encoding', default='utf-8', help='the character encoding for input/output (defaults to utf-8)')
     parser.add_argument('--precision', choices=['fp16', 'fp32', 'fp64'], default='fp64', help='the floating-point precision (defaults to fp64)')
     parser.add_argument('--cuda', action='store_true', help='use cuda (requires cupy)')
+    parser.add_argument('--vocab_size', help='Vocab size of loaded embedding for training(0 to disable)', type=int, default=0)
+    parser.add_argument('--trans_vocab_size', help='Vocab size of loaded embedding for transfer(0 to disable)', type=int, default=0)
     mapping_group = parser.add_argument_group('mapping arguments', 'Basic embedding mapping arguments (EMNLP 2016)')
     mapping_group.add_argument('-d', '--dictionary', default=sys.stdin.fileno(), help='the training dictionary file (defaults to stdin)')
     mapping_group.add_argument('--normalize', choices=['unit', 'center', 'unitdim', 'centeremb'], nargs='*', default=[], help='the normalization actions to perform in order')
@@ -79,8 +81,13 @@ def main():
     # Read input embeddings
     srcfile = open(args.src_input, encoding=args.encoding, errors='surrogateescape')
     trgfile = open(args.trg_input, encoding=args.encoding, errors='surrogateescape')
-    src_words, x = embeddings.read(srcfile, dtype=dtype)
-    trg_words, z = embeddings.read(trgfile, dtype=dtype)
+    src_words, x = embeddings.read(srcfile, dtype=dtype, threshold=args.vocab_size)
+    trg_words, z = embeddings.read(trgfile, dtype=dtype, threshold=args.vocab_size)
+    if args.trans_vocab_size > 0:
+        srcfile = open(args.src_input, encoding=args.encoding, errors='surrogateescape')
+        trgfile = open(args.trg_input, encoding=args.encoding, errors='surrogateescape')
+        trans_src_words, trans_x = embeddings.read(srcfile, dtype=dtype, threshold=args.trans_vocab_size)
+        trans_trg_words, trans_z = embeddings.read(trgfile, dtype=dtype, threshold=args.trans_vocab_size)
 
     # NumPy/CuPy management
     if args.cuda:
@@ -301,6 +308,13 @@ def main():
     # Write mapped embeddings
     srcfile = open(args.src_output, mode='w', encoding=args.encoding, errors='surrogateescape')
     trgfile = open(args.trg_output, mode='w', encoding=args.encoding, errors='surrogateescape')
+
+    if args.trans_vocab_size > 0:
+        xw = trans_x.dot(w)
+        zw = trans_z
+        src_words = trans_src_words
+        trg_words = trans_trg_words
+
     embeddings.write(src_words, xw, srcfile)
     embeddings.write(trg_words, zw, trgfile)
     srcfile.close()

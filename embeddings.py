@@ -17,7 +17,6 @@ from cupy_utils import *
 
 import numpy as np
 
-
 def read(file, threshold=0, vocabulary=None, dtype='float'):
     header = file.readline().strip().split(' ')
     count = int(header[0]) if threshold <= 0 else min(threshold, int(header[0]))
